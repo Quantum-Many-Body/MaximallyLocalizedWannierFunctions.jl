@@ -1,0 +1,7 @@
+name = "MaximallyLocalizedWannierFunctions"
+uuid = "a60a83b3-623c-4776-a32c-37440dbde461"
+authors = ["waltergu <waltergu1989@gmail.com> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1.8"
