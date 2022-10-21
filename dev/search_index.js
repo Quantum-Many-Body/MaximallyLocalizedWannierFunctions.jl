@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"","page":"Home","title":"Home","text":"CurrentModule = MaximallyLocalizedWannierFunctions","category":"page"},{"location":"#MaximallyLocalizedWannierFunctions","page":"Home","title":"MaximallyLocalizedWannierFunctions","text":"","category":"section"},{"location":"","page":"Home","title":"Home","text":"Documentation for MaximallyLocalizedWannierFunctions.","category":"page"},{"location":"","page":"Home","title":"Home","text":"","category":"page"},{"location":"","page":"Home","title":"Home","text":"Modules = [MaximallyLocalizedWannierFunctions]","category":"page"}]
+}
