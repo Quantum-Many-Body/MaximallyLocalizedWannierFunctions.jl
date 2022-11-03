@@ -63,6 +63,7 @@ end
     ]
 
     ham = Hamiltonian(mlwf)
+    @test dimension(ham) == 1
     @test ham(; k=[0.0])[1, 1] ≈ -2.0099751242241757
     @test ham(; k=[π/2])[1, 1] ≈ -1.4257609220682836
 end

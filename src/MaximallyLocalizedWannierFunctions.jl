@@ -360,11 +360,11 @@ function Hamiltonian(mlwf::MLWF; atol=atol, rtol=rtol)
     return Hamiltonian(length(mlwf), coordinates, coefficients)
 end
 function (h::Hamiltonian)(; k::AbstractVector, filter=coeff->true)
-    result = zeros(Complex{dtype(h)}, h.num, h.num)
+    result = zeros(Complex{dtype(h)}, dimension(h), dimension(h))
     for (R, coefficient) in zip(h.coordinates, h.coefficients)
         if filter(coefficient)
             phase = exp(1im*dot(R, k))
-            for m=1:h.num, n=1:h.num
+            for m=1:dimension(h), n=1:dimension(h)
                 result[m, n] += phase*coefficient[m, n]
             end
         end
