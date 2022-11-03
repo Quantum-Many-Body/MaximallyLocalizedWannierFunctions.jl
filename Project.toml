@@ -3,5 +3,14 @@ uuid = "a60a83b3-623c-4776-a32c-37440dbde461"
 authors = ["waltergu <waltergu1989@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+QuantumLattices = "78ae1a1f-1d5d-5174-b61c-66e31b2346dc"
+TightBindingApproximation = "d3576f78-cb9d-4774-9dc5-b247cf392ff4"
+
 [compat]
+Optim = "1.7"
+QuantumLattices = "0.9.3"
+TightBindingApproximation = "0.1.15"
 julia = "1.8"

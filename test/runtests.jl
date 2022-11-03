@@ -1,6 +1,6 @@
-using MaximallyLocalizedWannierFunctions
 using Test
+using SafeTestsets
 
-@testset "MaximallyLocalizedWannierFunctions.jl" begin
-    # Write your tests here.
+@safetestset "MaximallyLocalizedWannierFunctions.jl" begin
+    include("MaximallyLocalizedWannierFunctions.jl")
 end
