@@ -1,8 +1,9 @@
 module MaximallyLocalizedWannierFunctions
 
+using Base.Iterators: product
 using LinearAlgebra: I, Diagonal, diag, dot, eigen, norm, svd
 using Optim: FirstOrderOptimizer, GradientDescent
-using QuantumLattices: atol, rtol, BrillouinZone, Lattice, Neighbors, Translations, bonds, expand, matrix, minimumlengths, rcoordinate
+using QuantumLattices: atol, rtol, BrillouinZone, Lattice, Neighbors, bonds, expand, matrix, minimumlengths, rcoordinate
 using TightBindingApproximation: TBA
 
 import TightBindingApproximation: optimize!
@@ -104,7 +105,7 @@ end
 @inline Base.length(mlwf::MLWF) = length(mlwf.eigenvalues[1]) # number of Wannier functions
 @inline Base.count(mlwf::MLWF) = length(mlwf.brillouinzone) # number of momenta
 @inline dimension(mlwf::MLWF) = dimension(mlwf.lattice) # spatial dimension
-@inline periods(mlwf::MLWF) = periods(eltype(mlwf.brillouinzone)) # periods of the Monkhorst-Pack mesh
+@inline periods(mlwf::MLWF) = periods(keytype(mlwf.brillouinzone)) # periods of the Monkhorst-Pack mesh
 @inline dtype(::MLWF{<:Lattice, <:BrillouinZone, T}) where {T<:Real} = T
 @inline update!(mlwf::MLWF, method::FirstOrderOptimizer=GradientDescent(); kwargs...) = update!(mlwf, method; kwargs...)
 
@@ -151,10 +152,10 @@ Get the values of the wannier functions at each lattice point.
 """
 function (mlwf::MLWF)(coordinate::AbstractVector)
     result = zeros(Complex{dtype(mlwf)}, length(mlwf.lattice), prod(periods(mlwf)), length(mlwf))
-    for (j, index) in enumerate(Translations(periods(mlwf); mode=:center))
+    for (j, index) in enumerate(product(map(i->-floor(Int, (i-1)/2):-floor(Int, (i-1)/2)+i-1, periods(mlwf))...))
         ΔR = mapreduce(*, +, index, mlwf.lattice.vectors) - coordinate
         for (n, momentum) in enumerate(mlwf.brillouinzone)
-            phase = exp(1im*dot(ΔR, expand(momentum, mlwf.brillouinzone.reciprocals)))
+            phase = exp(1im*dot(ΔR, momentum))
             for k = 1:length(mlwf)
                 for i = 1:length(mlwf.lattice)
                     result[i, j, k] += (mlwf.eigenvectors[n]*mlwf.unitaries[n])[i, k]*phase/count(mlwf)
@@ -303,10 +304,10 @@ Initialize a set of maximally localized Wannier functions.
 end
 function MLWF(hamiltonian::Function, lattice::Lattice, brillouinzone::BrillouinZone, bands::AbstractVector{Int}, guess::Union{δ, Nothing}=nothing; kwargs...)
     eigenvalues, eigenvectors, unitaries = Vector{dtype(lattice)}[], Matrix{Complex{dtype(lattice)}}[], Matrix{Complex{dtype(lattice)}}[]
-    weights, differences = finitedifferences(map((reciprocal, N)->reciprocal/N, brillouinzone.reciprocals, periods(eltype(brillouinzone))); kwargs...)
+    weights, differences = finitedifferences(map((reciprocal, N)->reciprocal/N, brillouinzone.reciprocals, periods(keytype(brillouinzone))); kwargs...)
     neighbors, overlaps = Vector{Int}[], Matrix{Matrix{Complex{dtype(lattice)}}}(undef, length(weights), length(brillouinzone))
-    diffs = map(diff->eltype(brillouinzone)(diff, brillouinzone.reciprocals), differences)
-    for momentum in brillouinzone
+    diffs = map(diff->keytype(brillouinzone)(diff, brillouinzone.reciprocals), differences)
+    for momentum in keys(brillouinzone)
         k = expand(momentum, brillouinzone.reciprocals)
         eigensystem = eigen(hamiltonian(k))
         push!(eigenvalues, eigensystem.values[bands])
@@ -343,11 +344,11 @@ end
 function Hamiltonian(mlwf::MLWF; atol=atol, rtol=rtol)
     coordinates, coefficients = eltype(fieldtype(typeof(mlwf), :lattice))[], Matrix{Complex{dtype(mlwf)}}[]
     Hₖs = [U'*Diagonal(E)*U for (U, E) in zip(mlwf.unitaries, mlwf.eigenvalues)]
-    for index in Translations(periods(mlwf); mode=:center)
+    for index in product(map(i->-floor(Int, (i-1)/2):-floor(Int, (i-1)/2)+i-1, periods(mlwf))...)
         R = mapreduce(*, +, index, mlwf.lattice.vectors)
         matrix = zeros(Complex{dtype(mlwf)}, length(mlwf), length(mlwf))
         for (Hₖ, momentum) in zip(Hₖs, mlwf.brillouinzone)
-            phase = exp(-1im*dot(R, expand(momentum, mlwf.brillouinzone.reciprocals)))
+            phase = exp(-1im*dot(R, momentum))
             for m=1:length(mlwf), n=1:length(mlwf)
                 matrix[m, n] += Hₖ[m, n]*phase/count(mlwf)
             end
