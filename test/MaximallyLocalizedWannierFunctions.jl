@@ -1,8 +1,9 @@
 using LinearAlgebra: norm
 using MaximallyLocalizedWannierFunctions
 using MaximallyLocalizedWannierFunctions: finitedifferences
-using QuantumLattices: Bond, BrillouinZone, Fock, Hilbert, Hopping, Lattice, Onsite, dimension, dtype, periods, reciprocals
-using TightBindingApproximation: TBA, optimize!
+using Plots: plot, plot!, savefig
+using QuantumLattices: Algorithm, Bond, BrillouinZone, Fock, Hilbert, Hopping, Lattice, ReciprocalPath, Onsite, dimension, dtype, periods, reciprocals
+using TightBindingApproximation: EnergyBands, Fermionic, TBA, optimize!
 
 @testset "finitedifferences" begin
     one = finitedifferences([[1.0]])
@@ -34,6 +35,8 @@ end
     t = Hopping(:t, 1.0, 1)
     Δ = Onsite(:Δ, 0.2, amplitude=bond::Bond->isodd(bond[1].site) ? 1 : -1)
     tba = TBA(lattice, hilbert, (t, Δ))
+    ebs = Algorithm(:Dimer, tba)(:EBS, EnergyBands(ReciprocalPath(reciprocals(lattice), (0,)=>(1,))))
+    savefig(plot(ebs), "eb.png")
 
     mlwf = MLWF(tba, BrillouinZone(reciprocals(lattice), 11), [1], δ([1.0; 0.0;;], [0.0], [2]))
     @test length(mlwf) == 1
@@ -41,10 +44,8 @@ end
     @test dimension(mlwf) == 1
     @test periods(mlwf) == (11,)
     @test dtype(mlwf) == Float64
-
     @test rₙ(mlwf) ≈ [[0.5]]
     @test Ω(mlwf) ≈ Ω₁(mlwf)+Ω₂(mlwf) ≈ sum(map((r, s)->r-norm(s)^2, r²ₙ(mlwf), rₙ(mlwf)))
-
     optimize!(mlwf; maxiter=20001, verbose=1000, rtol=10^-12)
     @test rₙ(mlwf) ≈ [[0.5]]
     @test Ω(mlwf) ≈ 0.2072121283426236
@@ -61,9 +62,19 @@ end
         -0.041492931194757894; -0.0056329409456026755;
         0.03236151242766532; 0.0017831651296530832
     ]
+    total = Lattice(mlwf.lattice, periods(mlwf), ntuple(i->'O', length(periods(mlwf))))
+    xs = reshape(total.coordinates, length(total.coordinates))
+    plt = plot()
+    for i = 1:count(mlwf)
+        plot!(plt, xs, abs2.(mlwf([i])), minorticks=5, legend=false)
+    end
+    savefig(plt, "mlwf.png")
 
     ham = Hamiltonian(mlwf)
     @test dimension(ham) == 1
     @test ham(; k=[0.0])[1, 1] ≈ -2.0099751242241757
     @test ham(; k=[π/2])[1, 1] ≈ -1.4257609220682836
+    lower = TBA{Fermionic{:TBA}}(lattice, ham, NamedTuple())
+    ebs = Algorithm(:Dimer, lower)(:EBS, EnergyBands(ReciprocalPath(reciprocals(lattice), (0,)=>(1,); length=2000)))
+    savefig(plot(ebs), "lower.png")
 end
