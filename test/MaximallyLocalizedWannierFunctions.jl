@@ -35,7 +35,7 @@ end
     t = Hopping(:t, 1.0, 1)
     Δ = Onsite(:Δ, 0.2, amplitude=bond::Bond->isodd(bond[1].site) ? 1 : -1)
     tba = TBA(lattice, hilbert, (t, Δ))
-    ebs = Algorithm(:Dimer, tba)(:EBS, EnergyBands(ReciprocalPath(reciprocals(lattice), (0,)=>(1,))))
+    ebs = Algorithm(:Dimer, tba)(:EBS, EnergyBands(ReciprocalPath(reciprocals(lattice), (0,), (1,); labels=("0", "2π"))))
     savefig(plot(ebs), "eb.png")
 
     mlwf = MLWF(tba, BrillouinZone(reciprocals(lattice), 11), [1], δ([1.0; 0.0;;], [0.0], [2]))
@@ -75,6 +75,6 @@ end
     @test ham(; k=[0.0])[1, 1] ≈ -2.0099751242241757
     @test ham(; k=[π/2])[1, 1] ≈ -1.4257609220682836
     lower = TBA{Fermionic{:TBA}}(lattice, ham, NamedTuple())
-    ebs = Algorithm(:Dimer, lower)(:EBS, EnergyBands(ReciprocalPath(reciprocals(lattice), (0,)=>(1,); length=2000)))
+    ebs = Algorithm(:Dimer, lower)(:EBS, EnergyBands(ReciprocalPath(reciprocals(lattice), (0,), (1,); length=2000, labels=("0", "2π"))))
     savefig(plot(ebs), "lower.png")
 end
